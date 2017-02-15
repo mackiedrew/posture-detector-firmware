@@ -3,7 +3,7 @@ const int yPin = A2;
 const int zPin = A1;
 
 const int buzzer = 2;
-const int interval = 1000;
+const int range = 20;
 
 // global accelerometer data
 int x = 0;
@@ -14,7 +14,6 @@ int avgX;
 int avgY;
 int avgZ;
 
-
 // Read gyro data
 void readGyro(){  
   x = analogRead(xPin);
@@ -22,20 +21,31 @@ void readGyro(){
   z = analogRead(zPin);
 }
 
-void calibrate(int interval2, int samples) {
+void calibrate(int sampleRate, int samples) {
+  Serial.println("Calibrating your posture, sit up!");
   int totalX = 0;
   int totalY = 0;
   int totalZ = 0;
   
   for(int i = 0; i < samples; i++){
-    delay(interval2);
+    Serial.println(i);
+    readGyro();
+    totalX += x;
+    totalY += y;
+    totalZ += z;
+    delay(sampleRate);
   }
+a
+  avgX = totalX / samples;
+  avgY = totalY / samples;
+  avgZ = totalZ / samples;
 }
 
 void setup() {
   // put your setup code here, to run once:
   pinMode(buzzer, OUTPUT);
   Serial.begin(9600);
+  calibrate(2000, 5);
 }
 
 void loop() {
@@ -46,16 +56,17 @@ void loop() {
   
   // Output gyro data
   Serial.print("X: ");
-  Serial.print(x);
+  Serial.print(x - avgX);
   Serial.print("; Y: ");
-  Serial.print(y);
+  Serial.print(y - avgY);
   Serial.print("; Z: ");
-  Serial.print(z);
+  Serial.print(z - avgZ);
   Serial.println(";");
 
   // Buzzer Controller
-  tone(buzzer, 1000);
-  delay(interval);
-  noTone(buzzer);
-  delay(interval);
+  if (abs(z - avgZ) > range){
+    tone(buzzer, 1000);
+  } else {
+    noTone(buzzer);
+  }
 }
